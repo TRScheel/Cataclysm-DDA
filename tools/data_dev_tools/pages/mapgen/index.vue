@@ -1,16 +1,11 @@
 <script setup lang="ts">
-import { useFileWalker } from "@/composables/useFileWalker";
-import { type Mapgen } from "@/types/mapgen";
+import useDataStore from "~/stores/data";
+import useGfxStore from "~/stores/gfx";
 
-const folderStructure = ref<null | unknown>(null);
-const { loadFiles } = useFileWalker();
+const dataStore = useDataStore();
+const gfxStore = useGfxStore();
 
-const loadFolderStructure = async () => {
-    const relativePath = "json/mapgen"; // Path relative to "data"
-    folderStructure.value = await loadFiles(relativePath);
-};
-
-const selectedJson = "house_garage.json";
+const selectedJson = "house01.json";
 const selectedFolder = "house";
 
 const data = ref<null | Mapgen[]>(null);
@@ -24,32 +19,56 @@ const loadData = async () => {
     } else {
         console.error("Failed to load JSON file");
     }
+
+    await dataStore.reloadAll();
+    await gfxStore.reloadTilesets();
+    await gfxStore.loadTileset("Altica");
+};
+
+onMounted(() => {
+    loadData();
+});
+
+const selectedTileset = computed({
+    get() {
+        return gfxStore.tilesetData.name;
+    },
+    set(value: string) {
+        gfxStore.loadTileset(value);
+    },
+});
+
+const paletteOptions = ref<unknown>({});
+
+const testPaletteOptions = () => {
+    paletteOptions.value = dataStore.flattenPalette({
+        paletteIds: [
+            "domestic_general_and_variant_palette",
+            "standard_domestic_landscaping_palette",
+            "standard_domestic_lino_bathroom",
+        ],
+    });
 };
 </script>
 
 <template>
     <div>
-        Map Editor
+        <div>Map Editor</div>
         <div>
-            <v-btn variant="tonal" @click="loadData"> Load Data </v-btn>
-            <v-btn variant="tonal" @click="loadFolderStructure">
-                Load Folders
-            </v-btn>
+            <v-select
+                label="Tileset"
+                :items="gfxStore.tilesets"
+                v-model="selectedTileset"
+            />
+            <v-btn @click="testPaletteOptions">Test Palette Options</v-btn>
         </div>
+        <map-gen-terrain v-if="data" :mapgenData="data[0]" />
         <div>
-            <mapgen v-if="data" v-for="mapgen in data" :mapgen-data="mapgen" />
+            <details>
+                <summary>Debug</summary>
+                <pre>{{ dataStore.regionalMapSettings }}</pre>
+            </details>
         </div>
-        <details>
-            <summary>Debug</summary>
-            <pre>
-                {{ data }}
-            </pre>
-        </details>
-
-        <details>
-            <summary>Folder Structure</summary>
-            <pre>{{ folderStructure }}</pre>
-        </details>
     </div>
 </template>
 

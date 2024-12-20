@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
     const requestedPath = query.path as string;
 
     const config = useRuntimeConfig();
-    const baseDataDir = config.public.dataDir;
+    const baseDataDir = config.public.baseDir;
     const targetDir = path.join(baseDataDir, requestedPath || "");
 
     if (!targetDir.startsWith(baseDataDir)) {

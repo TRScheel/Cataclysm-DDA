@@ -8,6 +8,7 @@ This is for development use only and has no production build. In order to view t
 run the following commands:
 
 ```bash
+npm config set legacy-peer-deps true
 npm install
 npm run dev
 ```
